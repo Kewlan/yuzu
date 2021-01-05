@@ -299,6 +299,7 @@ void QtControllerSelectorDialog::CallConfigureInputProfileDialog() {
                           Qt::WindowSystemMenuHint);
     dialog.setWindowModality(Qt::WindowModal);
     dialog.exec();
+    input_profiles->ApplyConfiguration();
 }
 
 bool QtControllerSelectorDialog::CheckIfParametersMet() {

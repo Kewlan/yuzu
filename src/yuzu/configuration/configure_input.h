@@ -53,6 +53,7 @@ private:
     void UpdateDockedState(bool is_handheld);
     void UpdateAllInputDevices();
     void UpdateAllInputProfiles(std::size_t player_index);
+    void RenameInputProfile(const QString& old_name, const QString& new_name);
 
     /// Load configuration settings.
     void LoadConfiguration();

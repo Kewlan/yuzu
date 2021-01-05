@@ -75,6 +75,9 @@ public:
     /// Updates the list of controller profiles.
     void UpdateInputProfiles();
 
+    /// Renames the specified input profile.
+    void RenameSpecifiedProfile(const QString& old_name, const QString& new_name);
+
     /// Restore all buttons to their default values.
     void RestoreDefaults();
 
@@ -94,6 +97,11 @@ signals:
      * will not be updated for this index as they are already updated by other mechanisms.
      */
     void RefreshInputProfiles(std::size_t player_index);
+    /**
+     * Emitted when an input profile has been renamed.
+     * All player that have the profile that's being renamed will also rename theirs.
+     */
+    void InputProfileRenamed(QString old_name, QString new_name);
 
 protected:
     void showEvent(QShowEvent* event) override;
@@ -167,6 +175,9 @@ private:
     /// Saves the current controller configuration into a selected controller profile.
     void SaveProfile();
 
+    /// Renames the selected input profile.
+    void RenameProfile();
+
     std::unique_ptr<Ui::ConfigureInputPlayer> ui;
 
     std::size_t player_index;
@@ -175,6 +186,7 @@ private:
     InputCommon::InputSubsystem* input_subsystem;
 
     InputProfiles* profiles;
+    static constexpr char unselected_profile[] = "[none]";
 
     std::unique_ptr<QTimer> timeout_timer;
     std::unique_ptr<QTimer> poll_timer;

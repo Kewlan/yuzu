@@ -129,6 +129,8 @@ void ConfigureInput::Initialize(InputCommon::InputSubsystem* input_subsystem,
                 &ConfigureInput::UpdateAllInputDevices);
         connect(player_controllers[i], &ConfigureInputPlayer::RefreshInputProfiles, this,
                 &ConfigureInput::UpdateAllInputProfiles, Qt::QueuedConnection);
+        connect(player_controllers[i], &ConfigureInputPlayer::InputProfileRenamed, this,
+                &ConfigureInput::RenameInputProfile, Qt::QueuedConnection);
         connect(player_connected[i], &QCheckBox::stateChanged, [this, i](int state) {
             player_controllers[i]->ConnectPlayer(state == Qt::Checked);
         });
@@ -186,6 +188,7 @@ void ConfigureInput::ApplyConfiguration() {
         controller->ApplyConfiguration();
         controller->TryDisconnectSelectedController();
     }
+    profiles->ApplyConfiguration();
 
     // This emulates a delay between disconnecting and reconnecting controllers as some games
     // do not respond to a change in controller type if it was instantaneous.
@@ -284,5 +287,11 @@ void ConfigureInput::UpdateAllInputProfiles(std::size_t player_index) {
         }
 
         player_controllers[i]->UpdateInputProfiles();
+    }
+}
+
+void ConfigureInput::RenameInputProfile(const QString& old_name, const QString& new_name) {
+    for (const auto& player : player_controllers) {
+        player->RenameSpecifiedProfile(old_name, new_name);
     }
 }
