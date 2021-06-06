@@ -16,6 +16,7 @@
 #include <QThreadPool>
 #include <fmt/format.h>
 #include "common/common_types.h"
+#include "common/fs/path_util.h"
 #include "common/logging/log.h"
 #include "core/file_sys/patch_manager.h"
 #include "core/file_sys/registered_cache.h"
@@ -308,6 +309,8 @@ GameList::GameList(FileSys::VirtualFilesystem vfs, FileSys::ManualContentProvide
     : QWidget{parent}, vfs(std::move(vfs)), provider(provider) {
     watcher = new QFileSystemWatcher(this);
     connect(watcher, &QFileSystemWatcher::directoryChanged, this, &GameList::RefreshGameDirectory);
+    mods_watcher = new QFileSystemWatcher(this);
+    connect(mods_watcher, &QFileSystemWatcher::directoryChanged, this, &GameList::RefreshAddOns);
 
     this->main_window = parent;
     layout = new QVBoxLayout;
@@ -459,6 +462,21 @@ void GameList::DonePopulating(const QStringList& watch_list) {
         watcher->addPaths(watch_list.mid(i, i + SLICE_SIZE));
         QCoreApplication::processEvents();
     }
+
+    QDir load_dir(
+        QString::fromStdString(Common::FS::GetYuzuPathString(Common::FS::YuzuPath::LoadDir)));
+    QStringList mod_folder_list =
+        load_dir.entryList(QDir::Filter::Dirs | QDir::Filter::NoDotAndDotDot);
+
+    for (int i = 0; i < mod_folder_list.length(); i++) {
+        mod_folder_list[i].insert(0, load_dir.path() + QStringLiteral("/"));
+        LOG_INFO(Frontend, "Path {}: {}", i, mod_folder_list[i].toStdString());
+    }
+    if (!mods_watcher->directories().isEmpty()) {
+        mods_watcher->removePaths(mods_watcher->directories());
+    }
+    mods_watcher->addPaths(mod_folder_list);
+
     tree_view->setEnabled(true);
     int children_total = 0;
     for (int i = 1; i < item_model->rowCount() - 1; ++i) {
@@ -749,6 +767,25 @@ void GameList::RefreshGameDirectory() {
     if (!UISettings::values.game_dirs.isEmpty() && current_worker != nullptr) {
         LOG_INFO(Frontend, "Change detected in the games directory. Reloading game list.");
         PopulateAsync(UISettings::values.game_dirs);
+    }
+}
+
+void GameList::RefreshAddOns(const QString& mod_folder_path) {
+    const auto id_str = Common::FS::GetFilename(mod_folder_path.toStdString());
+    LOG_INFO(Frontend, "Refreshing {}", id_str);
+
+    const u64 program_id = std::stoull(id_str.data(), nullptr, 16);
+    LOG_INFO(Frontend, "program_id: {}", program_id);
+
+    // Refresh all rows with program_id
+    for (int i = 0; i < item_model->rowCount() - 1; i++) {
+        const auto* folder = item_model->item(i);
+        for (int j = 0; j < folder->rowCount(); j++) {
+            if (folder->child(j)->data(GameListItemPath::ProgramIdRole).toULongLong() ==
+                program_id) {
+                folder->child(j, 2)->setText(QStringLiteral("NEW TEXT HERE!"));
+            }
+        }
     }
 }
 

@@ -112,6 +112,7 @@ private:
     void DonePopulating(const QStringList& watch_list);
 
     void RefreshGameDirectory();
+    void RefreshAddOns(const QString& mod_folder_path);
 
     void ToggleFavorite(u64 program_id);
     void AddFavorite(u64 program_id);
@@ -132,6 +133,7 @@ private:
     QStandardItemModel* item_model = nullptr;
     GameListWorker* current_worker = nullptr;
     QFileSystemWatcher* watcher = nullptr;
+    QFileSystemWatcher* mods_watcher = nullptr;
     CompatibilityList compatibility_list;
 
     friend class GameListSearchField;
